@@ -1,3 +1,3 @@
 <template>
-  <div></div>
+  <div>菜品分离</div>
 </template>
