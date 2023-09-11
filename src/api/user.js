@@ -1,16 +1,57 @@
 import request from '@/utils/request'
 
-// 注册接口
-export const userRegisterService = ({ username, password, repassword }) => {
-  return request.post('/api/reg', { username, password, repassword })
+// 获取用户信息
+export const getUserInfoService = () => {
+  return request.get('/employee/info')
 }
 
-// 登录接口
-export const userLoginService = ({ username, password }) => {
-  return request.post('/api/login', { username, password })
+// 修改用户信息
+export const updateUserInfoService = (params) => {
+  return request.post('/employee/update', params)
 }
 
-// 获取用户基本信息
-export const userGetInfoService = () => {
-  return request.get('/my/userinfo')
+// 修改密码
+export const updatePasswordService = (params) => {
+  return request.post('/employee/updatePassword', params)
 }
+
+// 员工信息分页查询
+export const getEmployeeList = (params) => {
+  return request.get('/employee/page', {
+    params
+  })
+}
+
+//  新增员工
+export const addEmployeeService = (data) => {
+  return request.post('/employee', data)
+}
+
+// 根据id修改员工信息
+export const updateEmployeeService = (data) => {
+  return request.put('/employee', data)
+}
+
+// 根据id查询员工信息
+export const getEmployeeByIdService = (id) => {
+  return request.get(`/employee/${id}`)
+}
+
+// 删除员工
+export const deleteEmployeeService = (id) => {
+  return request.delete(`/employee/${id}`)
+}
+
+// 批量删除员工
+export const deleteEmployeesService = (ids) => {
+  return request.delete('/employee/batch', {
+    params: {
+      ids
+    }
+  })
+}
+
+// 导出员工信息
+
+
+export const userGetInfoService = () => {}

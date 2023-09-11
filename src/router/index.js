@@ -28,9 +28,14 @@ const router = createRouter({
         {
           path: '/manage/orderForm',
           component: () => import('@/views/manage/orderForm.vue')
+        },
+        {
+          path: '/user/info',
+          component: () => import('@/views/user/userInfo.vue')
         }
       ]
     },
+
     // 配置404页面
     {
       path: '/:pathMatch(.*)*',
