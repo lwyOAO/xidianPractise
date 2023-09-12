@@ -1,28 +1,25 @@
 <script setup>
 import { ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
-import { addEmployeeService, updateEmployeeService } from '@/api/user.js'
+import { foodCategoryAdd, foodCategoryUpdate } from '@/api/foodCategory.js'
 import { useUserStore } from '@/stores'
 
-//注册功能 数据模型
+// 数据模型
 const formModel = ref({
   id: '',
   name: '',
-  password: '',
-  sex: '',
-  idNumber: '',
-  phone: '',
-  createtime: '',
-  createUser: '',
-  username: '',
-  status: '1'
+  sort: '',
+  type: 1,
+  updateTime: '',
+  updateUser: '',
+  createTime: '',
+  createUser: ''
 })
 
 const drawerVisiable = ref(false)
 const isCreated = ref(true)
 // 定义控制抽屉是否显示的函数
 const open = (row) => {
-  console.log(row)
   if (row.id) {
     isCreated.value = false
   }
@@ -39,22 +36,31 @@ defineExpose({
 })
 
 const emit = defineEmits(['change'])
+const props = defineProps(['title'])
 
 const userStore = useUserStore()
 
+// 表单数据格式化
+const formatter = () => {
+  formModel.value.createUser = +userStore.user.id
+  formModel.value.updateUser = +userStore.user.id
+  formModel.value.id = +formModel.value.id
+  formModel.value.sort = +formModel.value.sort
+  if (props.title === '菜品') {
+    formModel.value.type = 1
+  } else {
+    formModel.value.type = 2
+  }
+}
+
 // 提交表单
 const form = ref()
-const OnAddEmployee = async () => {
+const OnAddCategory = async () => {
   await form.value.validate()
-  formModel.value.createtime = new Date()
-  formModel.value.createUser = userStore.user.id
-  formModel.value.status = formModel.value.status === '1' ? 1 : 0
-  formModel.value.id = +formModel.value.id
-  console.log('员工表单')
-  console.log(formModel.value)
-  const res = await addEmployeeService(formModel.value)
+  formatter()
+  const res = await foodCategoryAdd(formModel.value)
   if (res.data.code === 1) {
-    ElMessage.success('添加员工信息成功')
+    ElMessage.success(`添加成功`)
     emit('change')
   } else {
     ElMessage.error(res.data.data)
@@ -62,11 +68,10 @@ const OnAddEmployee = async () => {
 }
 
 // 修改信息
-const OnEditEmployee = async () => {
+const OnEditCategory = async () => {
   formModel.value.createUser = userStore.user.id
-  formModel.value.status = formModel.value.status === '1' ? 1 : 0
   formModel.value.id = Number(formModel.value.id)
-  const res = await updateEmployeeService(formModel.value)
+  const res = await foodCategoryUpdate(formModel.value)
   if (res.data.code === 1) {
     ElMessage.success(res.data.data)
     emit('change')
@@ -116,14 +121,9 @@ const rules = {
 </script>
 
 <template>
-  <el-drawer
-    v-model="drawerVisiable"
-    direction="rtl"
-    size="60%"
-    title="添加员工"
-  >
+  <el-drawer v-model="drawerVisiable" direction="rtl" size="60%" title="添加">
     <template #header>
-      <h4>添加员工</h4>
+      <h4>添加{{ props.title }}</h4>
     </template>
     <template #default>
       <el-form
@@ -136,69 +136,28 @@ const rules = {
         <el-row>
           <el-col class="left" :span="8" :offset="2">
             <el-form-item>
-              <el-text>用户名</el-text>
+              <el-text>分类名</el-text>
               <el-input
                 :prefix-icon="User"
                 v-model="formModel.name"
-                placeholder="请输入员工姓名"
+                placeholder="请输入菜品名"
               ></el-input>
             </el-form-item>
             <el-form-item>
-              <el-text>登录密码</el-text>
+              <el-text>排序</el-text>
               <el-input
                 name="password"
-                v-model="formModel.password"
+                v-model="formModel.sort"
                 :prefix-icon="Lock"
-                type="password"
-                placeholder="请输入登录密码"
+                placeholder="请输入排序"
               ></el-input>
             </el-form-item>
             <el-form-item>
-              <el-text>身份证号</el-text>
-              <el-input
-                :prefix-icon="User"
-                v-model="formModel.idNumber"
-                placeholder="请输入身份证号"
-              ></el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-text>账号状态</el-text>
-              <el-select v-model="formModel.status" size="large">
-                <el-option label="启用" value="1" />
-                <el-option label="禁用" value="0" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col class="right" :span="8" :offset="2">
-            <el-form-item>
-              <el-text>员工昵称</el-text>
-              <el-input
-                :prefix-icon="User"
-                v-model="formModel.username"
-                placeholder="请输入员工昵称"
-              ></el-input>
-            </el-form-item>
-            <el-form-item required>
-              <el-text style="width: 100%">性别</el-text>
-              <el-select v-model="formModel.sex" size="large">
-                <el-option label="男" value="1" />
-                <el-option label="女" value="0" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-text>电话号码</el-text>
-              <el-input
-                :prefix-icon="User"
-                v-model="formModel.phone"
-                placeholder="请输入电话号码"
-              ></el-input>
-            </el-form-item>
-            <el-form-item>
-              <el-text>员工编号</el-text>
+              <el-text>分类编号</el-text>
               <el-input
                 :prefix-icon="User"
                 v-model="formModel.id"
-                placeholder="请输入员工编号"
+                placeholder="请输入分类编号"
               ></el-input>
             </el-form-item>
           </el-col>
@@ -208,10 +167,10 @@ const rules = {
     <template #footer>
       <div style="flex: auto">
         <el-button @click="OnCancel">取消</el-button>
-        <el-button type="primary" @click="OnAddEmployee" v-if="isCreated">
+        <el-button type="primary" @click="OnAddCategory" v-if="isCreated">
           增添
         </el-button>
-        <el-button type="primary" @click="OnEditEmployee" v-else
+        <el-button type="primary" @click="OnEditCategory" v-else
           >更改</el-button
         >
       </div>

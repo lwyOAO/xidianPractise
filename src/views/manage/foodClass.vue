@@ -1,23 +1,24 @@
 <script setup>
 import { ref } from 'vue'
-import editEmployee from './components/editEmployee.vue'
+import editCategory from './components/editCategory.vue'
 import { Edit, Delete } from '@element-plus/icons-vue'
-import { useFoodClassStore } from '@/stores/index.js'
+import { foodCategoryPage, foodCategoryDelete } from '@/api/foodCategory.js'
+import { ElMessage } from 'element-plus'
+
+// 控制加载图标是否显示
+const loading = ref(false)
 
 // 控制抽屉显示隐藏
-const editFoodRef = ref()
+const editCategoryRef = ref()
 const OnAddFoodClass = () => {
-  editFoodRef.value.open()
+  editCategoryRef.value.open('')
 }
 
 // 控制分页大小
-const total = ref(0)
+const total = ref(1)
 const params = ref({
-  pagenum: 1,
-  pagesize: 10,
-  cate_id: '',
-  state: '',
-  name: ''
+  page: 1,
+  pageSize: 10
 })
 
 // 批量选择
@@ -28,14 +29,66 @@ const handleSelectionChange = (list) => {
   return selList
 }
 
-// 菜品数据
-const foodClassStore = useFoodClassStore()
+// 初始加载菜品数据
+const foodClassList = ref([])
+const OnLoadFoodClass = async () => {
+  loading.value = true
+  const res = await foodCategoryPage(params.value)
+  if (res.data.code === 0) {
+    ElMessage.error('获取员工列表失败,请登录')
+    loading.value = false
+    return
+  }
+
+  foodClassList.value = res.data.data.records.filter((item) => item.type === 1)
+  total.value = res.data.data.total
+  loading.value = false
+}
+OnLoadFoodClass()
+
 const OnDelBatch = () => {}
 const OnSaleBatch = () => {}
 const OnStopBatch = () => {}
 
-// 控制加载图标是否显示
-const loading = ref(false)
+// 分页管理
+const onSizeChange = (size) => {
+  params.value.page = 1
+  params.value.pageSize = size
+  OnLoadFoodClass()
+}
+const onCurrentChange = (page) => {
+  params.value.page = page
+  OnLoadFoodClass()
+}
+
+// 编辑菜品信息
+const OnEdit = (row) => {
+  editCategoryRef.value.open(row)
+}
+
+// 删除菜品信息
+const onDelete = async (row) => {
+  await ElMessageBox.confirm('确定删除该菜品?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+
+  const res = await foodCategoryDelete(+row.id)
+  console.log(res)
+  if (res.data.msg === '') {
+    ElMessage.warning(res.data.data)
+  } else {
+    ElMessage.success(res.data.data)
+  }
+  OnLoadFoodClass()
+}
+
+// 刷新页面
+const onChangeCategory = () => {
+  console.log('change')
+  OnLoadFoodClass()
+}
 </script>
 
 <template>
@@ -50,24 +103,24 @@ const loading = ref(false)
     <!--表格区域-->
     <el-table
       v-loading="loading"
-      :data="foodClassStore.foodClassList"
-      height="425"
+      :data="foodClassList"
+      height="450"
       style="width: 100%"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="food_name" label="菜品名称"></el-table-column>
-      <el-table-column prop="picture" label="图片"></el-table-column>
-      <el-table-column prop="food_class" label="菜品分类"></el-table-column>
-      <el-table-column prop="price" label="售价"></el-table-column>
-      <el-table-column prop="last_date" label="最后修改时间"></el-table-column>
-      <el-table-column prop="sale_state" label="售卖状态"></el-table-column>
+      <el-table-column prop="id" label="菜品编号" />
+      <el-table-column prop="name" label="分类名称" />
+      <el-table-column prop="createTime" label="上架时间" />
+      <el-table-column prop="createUser" label="创建人ID" />
+      <el-table-column prop="updateTime" label="最后修改时间" />
+      <el-table-column prop="updateUser" label="创建人ID" />
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <el-button-group class="ml-4">
             <el-button type="primary" :icon="Edit" @click="OnEdit(row)" />
             <el-button type="warning" :icon="Share">停售</el-button>
-            <el-button type="danger" :icon="Delete" />
+            <el-button type="danger" :icon="Delete" @click="onDelete(row)" />
           </el-button-group>
         </template>
       </el-table-column>
@@ -80,8 +133,8 @@ const loading = ref(false)
     <!--分页区域-->
     <el-pagination
       style="margin-top: 20px; justify-content: flex-end"
-      v-model:current-page="params.pagenum"
-      v-model:page-size="params.pagesize"
+      v-model:current-page="params.page"
+      v-model:page-size="params.pageSize"
       :page-sizes="[3, 5, 10]"
       :background="true"
       layout="jumper, total, sizes, prev, pager, next"
@@ -91,7 +144,11 @@ const loading = ref(false)
     />
 
     <!--抽屉部分-->
-    <editEmployee ref="editFoodRef"></editEmployee>
+    <editCategory
+      :title="菜品"
+      ref="editCategoryRef"
+      @change="onChangeCategory"
+    ></editCategory>
   </page-container>
 </template>
 

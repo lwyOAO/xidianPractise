@@ -4,12 +4,9 @@ import request from '@/utils/request'
 export const foodCategoryAdd = (data) => request.post('/category', data)
 
 // 菜品分页查询
-export const foodCategoryPage = (page, pageSize) =>
+export const foodCategoryPage = (params) =>
   request.get('/category/page', {
-    params: {
-      page,
-      pageSize
-    }
+    params
   })
 
 // 根据id删除分类

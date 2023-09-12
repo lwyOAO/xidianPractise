@@ -9,7 +9,6 @@ import {
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores'
 import { userLogoutService } from '@/api/login'
-import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()

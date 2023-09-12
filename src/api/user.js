@@ -29,6 +29,8 @@ export const addEmployeeService = (data) => {
 
 // 根据id修改员工信息
 export const updateEmployeeService = (data) => {
+  console.log('发送')
+  console.log(data)
   return request.put('/employee', data)
 }
 
@@ -39,7 +41,11 @@ export const getEmployeeByIdService = (id) => {
 
 // 删除员工
 export const deleteEmployeeService = (id) => {
-  return request.delete(`/employee/${id}`)
+  return request.delete('/employee', {
+    params: {
+      id
+    }
+  })
 }
 
 // 批量删除员工

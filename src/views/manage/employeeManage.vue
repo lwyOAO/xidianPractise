@@ -2,7 +2,12 @@
 import { Edit, Delete } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import editEmployee from './components/editEmployee.vue'
-import { getEmployeeList, getEmployeeByIdService } from '@/api/user.js'
+import { ElMessage } from 'element-plus';
+import {
+  getEmployeeList,
+  getEmployeeByIdService,
+  deleteEmployeeService
+} from '@/api/user.js'
 
 // 控制抽屉显示隐藏
 const editEmployeeRef = ref()
@@ -61,6 +66,17 @@ const onEditChannel = (row) => {
   editEmployeeRef.value.open(row)
 }
 
+// 删除员工信息
+const onDelChannel = async (row) => {
+  const res = await deleteEmployeeService(row.id)
+  if (res.data.code === 1) {
+    ElMessage.success(res.data.data)
+    getEmployee()
+  } else {
+    ElMessage.error('删除失败')
+  }
+}
+
 const onChangeEmployee = () => {
   console.log('change')
   getEmployee()
@@ -70,7 +86,6 @@ const onChangeEmployee = () => {
 const empId = ref()
 const onSearch = async () => {
   const res = await getEmployeeByIdService(empId.value)
-  console.log(res)
   employeeList.value = [{ ...res.data.data }]
   employeeList.value = employeeList.value.map((item) => {
     item.sex = item.sex === '1' ? '男' : '女'
