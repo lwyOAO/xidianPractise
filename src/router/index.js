@@ -30,6 +30,10 @@ const router = createRouter({
           component: () => import('@/views/manage/orderForm.vue')
         },
         {
+          path: '/manage/food',
+          component: () => import('@/views/manage/dishEat.vue')
+        },
+        {
           path: '/user/info',
           component: () => import('@/views/user/userInfo.vue')
         }

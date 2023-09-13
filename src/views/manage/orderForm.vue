@@ -2,7 +2,8 @@
 import { ref } from 'vue'
 import editEmployee from './components/editEmployee.vue'
 import { Edit, Delete, Search } from '@element-plus/icons-vue'
-import { useFoodClassStore } from '@/stores/index.js'
+import { getOrderDetail } from '@/api/orderList.js'
+import { ElMessage } from 'element-plus'
 
 // 控制抽屉显示隐藏
 const editFoodRef = ref()
@@ -10,8 +11,8 @@ const editFoodRef = ref()
 // 控制分页大小
 const total = ref(0)
 const params = ref({
-  pagenum: 1,
-  pagesize: 10,
+  page: 1,
+  pageSize: 10,
   cate_id: '',
   state: '',
   name: ''
@@ -25,15 +26,38 @@ const handleSelectionChange = (list) => {
   return selList
 }
 
-// 菜品数据
-const foodClassStore = useFoodClassStore()
 // 控制加载图标是否显示
 const loading = ref(false)
 
-// 输入框数据
-const inputValue = ref()
 // 时间数据
-const timeValue = ref()
+const timeValue = ref([])
+// 监听日期
+const dateChange = (date) => {
+  console.log('日期变化')
+  console.log(date)
+}
+
+// 输入框数据: 订单号
+const orderId = ref()
+// 订单列表
+const orderList = ref([])
+// 初始化订单数据
+const getOrderData = async () => {
+  const res = await getOrderDetail({
+    page: params.value.page,
+    pageSize: params.value.pageSize,
+    number: orderId.value || undefined, // 订单号
+    beginTime: timeValue.value[0] || undefined,
+    endTime: timeValue.value[1] || undefined
+  })
+  if (res.data.code === 1) {
+    console.log(res)
+    orderList.value = res.data.data.records
+  } else {
+    ElMessage.error(res.data.msg)
+  }
+}
+getOrderData()
 </script>
 
 <template>
@@ -41,27 +65,17 @@ const timeValue = ref()
     <template #extra>
       <div class="top">
         <el-input
-          v-model="inputValue"
+          v-model="orderId"
           placeholder="输入订单编号搜索"
           class="input-with-select"
         >
-          <template #prepend>
-            <el-select
-              v-model="select"
-              placeholder="Select"
-              style="width: 115px"
-            >
-              <el-option label="Restaurant" value="1" />
-              <el-option label="Order No." value="2" />
-              <el-option label="Tel" value="3" />
-            </el-select>
-          </template>
           <template #append>
             <el-button :icon="Search" />
           </template>
         </el-input>
         <el-date-picker
           v-model="timeValue"
+          @change="dateChange"
           type="daterange"
           range-separator="到"
           start-placeholder="开始时间"
@@ -74,18 +88,19 @@ const timeValue = ref()
     <!--表格区域-->
     <el-table
       v-loading="loading"
-      :data="foodClassStore.foodClassList"
+      :data="orderList"
       height="425"
       style="width: 100%"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" />
-      <el-table-column prop="food_name" label="订单编号"></el-table-column>
-      <el-table-column prop="picture" label="订单状态"></el-table-column>
-      <el-table-column prop="food_class" label="用户地址"></el-table-column>
-      <el-table-column prop="price" label="手机号"></el-table-column>
-      <el-table-column prop="last_date" label="下单时间"></el-table-column>
-      <el-table-column prop="sale_state" label="实收金额"></el-table-column>
+      <el-table-column prop="id" label="订单编号"></el-table-column>
+      <el-table-column prop="consignee" label="用户名"></el-table-column>
+      <el-table-column prop="status" label="订单状态"></el-table-column>
+      <el-table-column prop="address" label="用户地址"></el-table-column>
+      <el-table-column prop="phone" label="手机号"></el-table-column>
+      <el-table-column prop="orderTime" label="下单时间"></el-table-column>
+      <el-table-column prop="amount" label="实收金额"></el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <el-button-group class="ml-4">

@@ -23,12 +23,12 @@ const params = ref({
 })
 
 // 批量选择
-const handleSelectionChange = (list) => {
-  //list为选中的数据foodClassList
-  // 收集数据中的id
-  const selList = list.map((item) => item.food_id)
-  return selList
-}
+// const handleSelectionChange = (list) => {
+//   //list为选中的数据foodClassList
+//   // 收集数据中的id
+//   const selList = list.map((item) => item.food_id)
+//   return selList
+// }
 
 // 初始加载菜品数据
 const foodClassList = ref([])
@@ -46,10 +46,6 @@ const OnLoadFoodClass = async () => {
   loading.value = false
 }
 OnLoadFoodClass()
-
-const OnDelBatch = () => {}
-const OnSaleBatch = () => {}
-const OnStopBatch = () => {}
 
 // 分页管理
 const onSizeChange = (size) => {
@@ -89,9 +85,6 @@ const onChangeCategory = () => {
 <template>
   <page-container title="套餐管理">
     <template #extra>
-      <el-button type="danger" text @click="OnDelBatch">批量删除</el-button>
-      <el-button type="success" text @click="OnSaleBatch">批量起售</el-button>
-      <el-button type="warning" text @click="OnStopBatch">批量停售</el-button>
       <el-button class="addFood" @click="OnAddFoodClass">添加套餐</el-button>
     </template>
 
@@ -101,15 +94,12 @@ const onChangeCategory = () => {
       :data="foodClassList"
       height="450"
       style="width: 100%"
-      @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" />
-      <el-table-column prop="id" label="菜品编号" />
-      <el-table-column prop="name" label="分类名称" />
+      <el-table-column prop="id" label="套餐编号" />
+      <el-table-column prop="name" label="套餐名称" />
       <el-table-column prop="createTime" label="上架时间" />
-      <el-table-column prop="createUser" label="创建人ID" />
       <el-table-column prop="updateTime" label="最后修改时间" />
-      <el-table-column prop="updateUser" label="创建人ID" />
+      <el-table-column prop="updateUser" label="修改人ID" />
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <el-button-group class="ml-4">

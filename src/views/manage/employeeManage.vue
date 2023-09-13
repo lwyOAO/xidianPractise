@@ -68,6 +68,11 @@ const onEditChannel = (row) => {
 
 // 删除员工信息
 const onDelChannel = async (row) => {
+  await ElMessageBox.confirm('你确定要删除吗？', '温馨提示', {
+    type: 'warning',
+    confirmButtonText: '确认',
+    cancelButtonText: '取消'
+  })
   const res = await deleteEmployeeService(row.id)
   if (res.data.code === 1) {
     ElMessage.success(res.data.data)
@@ -78,13 +83,17 @@ const onDelChannel = async (row) => {
 }
 
 const onChangeEmployee = () => {
-  console.log('change')
   getEmployee()
 }
 
 // 根据条件搜索
 const empId = ref()
 const onSearch = async () => {
+  // 在id为空时，直接分页查询
+  if (!empId.value) {
+    getEmployee()
+    return
+  }
   const res = await getEmployeeByIdService(empId.value)
   employeeList.value = [{ ...res.data.data }]
   employeeList.value = employeeList.value.map((item) => {
@@ -97,6 +106,7 @@ const onSearch = async () => {
 // 重置搜索条件
 const onReset = () => {
   empId.value = ''
+  params.value.name = ''
   getEmployee()
 }
 </script>
@@ -113,13 +123,7 @@ const onReset = () => {
         <el-input v-model="empId"></el-input>
       </el-form-item>
       <el-form-item label="姓名：">
-        <el-input></el-input>
-      </el-form-item>
-      <el-form-item label="状态：">
-        <el-select>
-          <el-option label="在职" value="在职"></el-option>
-          <el-option label="离职" value="离职"></el-option>
-        </el-select>
+        <el-input v-model="params.name"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSearch">搜索</el-button>
@@ -136,11 +140,11 @@ const onReset = () => {
     >
       <el-table-column prop="id" label="编号" width="100"></el-table-column>
       <el-table-column prop="name" label="员工姓名"></el-table-column>
-      <el-table-column prop="username" label="员工昵称"></el-table-column>
+      <el-table-column prop="username" label="账号名"></el-table-column>
       <el-table-column prop="phone" label="手机号码"></el-table-column>
       <el-table-column prop="sex" label="性别"></el-table-column>
       <el-table-column prop="status" label="账号状况"></el-table-column>
-      <el-table-column prop="createTime" label="入职时间"></el-table-column>
+      <el-table-column prop="createTime" label="创建时间"></el-table-column>
 
       <el-table-column label="操作" width="100">
         <template #default="{ row }">

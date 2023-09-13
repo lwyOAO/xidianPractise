@@ -1,33 +1,57 @@
 <script setup>
 import { ref } from 'vue'
-import editCategory from './components/editCategory.vue'
-import { Edit, Delete } from '@element-plus/icons-vue'
-import { foodCategoryPage, foodCategoryDelete } from '@/api/foodCategory.js'
+import editDish from './components/editDish.vue'
+import { Edit, Delete, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { getDishes, deleteDish } from '@/api/dish.js'
+import { foodCategoryPage } from '@/api/foodCategory.js'
 
 // 控制加载图标是否显示
 const loading = ref(false)
 
 // 控制抽屉显示隐藏
-const editCategoryRef = ref()
+const editDishRef = ref()
 const OnAddFoodClass = () => {
-  editCategoryRef.value.open('')
+  editDishRef.value.open('')
 }
 
 // 控制分页大小
+const foodName = ref('')
 const total = ref(1)
 const params = ref({
   page: 1,
-  pageSize: 10
+  pageSize: 10,
+  name: foodName.value ? foodName.value : undefined
 })
 
 // 批量选择
 // const handleSelectionChange = (list) => {
-//   //list为选中的数据foodClassList
+//   //list为选中的数据foodList
 //   // 收集数据中的id
 //   const selList = list.map((item) => item.food_id)
 //   return selList
 // }
+
+// 分组数据
+const dishList = ref({})
+
+// 初始加载菜品数据
+const foodList = ref([])
+const OnLoadFood = async () => {
+  loading.value = true
+  dishList.value = {}
+  const res = await getDishes(params.value)
+  if (res.data.code === 0) {
+    ElMessage.error('获取菜品列表失败,请登录')
+    loading.value = false
+    return
+  }
+
+  foodList.value = res.data.data.records
+  total.value = res.data.data.total
+  loading.value = false
+}
+OnLoadFood()
 
 // 初始加载分类数据
 const foodClassList = ref([])
@@ -39,27 +63,46 @@ const OnLoadFoodClass = async () => {
     loading.value = false
     return
   }
-
-  foodClassList.value = res.data.data.records.filter((item) => item.type === 1)
-  total.value = res.data.data.total
-  loading.value = false
+  foodClassList.value = res.data.data.records
 }
 OnLoadFoodClass()
+
+// 初始化分组
+const setdishList = async () => {
+  const res = await getDishes({
+    page: 1,
+    pageSize: 99999
+  })
+  if (res.data.code === 1) {
+    // 将菜品按类型进行分组
+    res.data.data.records.forEach((item) => {
+      if (dishList.value[item.categoryId]) {
+        dishList.value[item.categoryId].push(item)
+      } else {
+        dishList.value[item.categoryId] = [item]
+      }
+    })
+  }
+}
+setdishList()
+
+// 选中的分类id
+const foodClassId = ref()
 
 // 分页管理
 const onSizeChange = (size) => {
   params.value.page = 1
   params.value.pageSize = size
-  OnLoadFoodClass()
+  OnLoadFood()
 }
 const onCurrentChange = (page) => {
   params.value.page = page
-  OnLoadFoodClass()
+  OnLoadFood()
 }
 
 // 编辑菜品信息
 const OnEdit = (row) => {
-  editCategoryRef.value.open(row)
+  editDishRef.value.open(row)
 }
 
 // 删除菜品信息
@@ -70,40 +113,70 @@ const onDelete = async (row) => {
     type: 'warning'
   })
 
-  const res = await foodCategoryDelete(+row.id)
+  const res = await deleteDish(row.id)
   console.log(res)
   if (res.data.msg === '') {
     ElMessage.warning(res.data.data)
   } else {
     ElMessage.success(res.data.data)
   }
-  OnLoadFoodClass()
+  OnLoadFood()
 }
 
 // 刷新页面
 const onChangeCategory = () => {
-  console.log('change')
-  OnLoadFoodClass()
+  foodList.value = dishList.value[foodClassId.value]
+}
+
+// 新增菜品
+const onChangeDish = () => {
+  editDishRef.value.open('')
 }
 </script>
 
 <template>
-  <page-container title="分类管理">
+  <page-container title="菜品管理">
     <template #extra>
-      <el-button class="addFood" @click="OnAddFoodClass">添加分类</el-button>
+      <div class="top">
+        <el-input
+          v-model="orderId"
+          placeholder="输入菜品名称搜索"
+          class="input-with-select"
+        >
+          <template #prepend>
+            <el-select
+              v-model="foodClassId"
+              placeholder="类型"
+              style="width: 115px"
+              @change="onChangeCategory"
+            >
+              <el-option
+                v-for="(item, index) in foodClassList"
+                :key="index"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+          </template>
+          <template #append>
+            <el-button :icon="Search" />
+          </template>
+        </el-input>
+        <el-button class="addFood" @click="OnAddFoodClass">添加菜品</el-button>
+      </div>
     </template>
 
     <!--表格区域-->
     <el-table
       v-loading="loading"
-      :data="foodClassList"
+      :data="foodList"
       height="450"
       style="width: 100%"
     >
-      <el-table-column prop="id" label="分类编号" />
+      <el-table-column prop="id" label="菜品编号" />
       <el-table-column prop="name" label="名称" />
+      <el-table-column prop="categoryName" label="类型" />
       <el-table-column prop="createTime" label="上架时间" />
-      <el-table-column prop="createUser" label="创建人ID" />
       <el-table-column prop="updateTime" label="最后修改时间" />
       <el-table-column prop="updateUser" label="修改人ID" />
       <el-table-column label="操作" width="200">
@@ -135,16 +208,20 @@ const onChangeCategory = () => {
     />
 
     <!--抽屉部分-->
-    <editCategory
-      :title="菜品"
-      ref="editCategoryRef"
-      @change="onChangeCategory"
-    ></editCategory>
+    <editDish :title="菜品" ref="editDishRef" @change="onChangeDish"></editDish>
   </page-container>
 </template>
 
 <style lang="scss" scoped>
 .addFood {
   margin-left: 50px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  .el-input {
+    margin-right: 20px;
+  }
 }
 </style>

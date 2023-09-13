@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import { User, Lock } from '@element-plus/icons-vue'
 import { addEmployeeService, updateEmployeeService } from '@/api/user.js'
 import { useUserStore } from '@/stores'
 
@@ -15,22 +14,27 @@ const formModel = ref({
   createtime: '',
   createUser: '',
   username: '',
-  status: '1'
+  status: '1',
+  repassword: ''
 })
 
+const title = ref('添加员工')
 const drawerVisiable = ref(false)
 const isCreated = ref(true)
 // 定义控制抽屉是否显示的函数
 const open = (row) => {
-  console.log(row)
   if (row.id) {
+    title.value = '修改员工信息'
     isCreated.value = false
+    formModel.value = { ...row }
+    formModel.value.repassword = formModel.value.password
+  } else {
+    title.value = '添加员工'
+    isCreated.value = true
   }
-  formModel.value = { ...row }
   drawerVisiable.value = true
 }
 const OnCancel = () => {
-  isCreated.value = true
   drawerVisiable.value = false
 }
 
@@ -50,8 +54,6 @@ const OnAddEmployee = async () => {
   formModel.value.createUser = userStore.user.id
   formModel.value.status = formModel.value.status === '1' ? 1 : 0
   formModel.value.id = +formModel.value.id
-  console.log('员工表单')
-  console.log(formModel.value)
   const res = await addEmployeeService(formModel.value)
   if (res.data.code === 1) {
     ElMessage.success('添加员工信息成功')
@@ -77,16 +79,26 @@ const OnEditEmployee = async () => {
 }
 
 // // 校验规则
-const rules = {
+const rules = ref({
+  name: [
+    {
+      pattern: /[\u4e00-\u9fa5]{1,10}/,
+      message: '员工名必须是 1-10 位的汉字或字母',
+      trigger: 'blur'
+    },
+    { required: true, message: '请输入员工姓名', trigger: 'blur' }
+  ],
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 10, message: '用户名必须是 2-10 位的字符', trigger: 'blur' }
+    {
+      pattern: /[\u4e00-\u9fa5a-zA-Z]{1,10}/,
+      message: '账号名必须是 1-10 位的汉字或字母',
+      trigger: 'blur'
+    },
+    { required: true, message: '请输入账号名', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     {
-      min: 6,
-      max: 20,
       pattern: /^\S{6,15}$/,
       message: '密码必须是 6-15 位的非空字符',
       trigger: 'blur'
@@ -111,92 +123,102 @@ const rules = {
       },
       trigger: 'blur'
     }
+  ],
+  // 身份证号
+  idNumber: [
+    { required: true, message: '请输入身份证号', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        const idCardPattern = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/
+        if (!idCardPattern.test(value)) {
+          callback(new Error('身份证号格式不正确'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号码', trigger: 'blur' },
+    { pattern: /\d{11}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  id: [
+    { required: true, message: '请输入员工编号', trigger: 'blur' },
+    {
+      pattern: /^\d{1,8}$/,
+      message: '员工编号必须为 1 到 8 位的数字',
+      trigger: 'blur'
+    }
   ]
-}
+})
 </script>
 
 <template>
-  <el-drawer
-    v-model="drawerVisiable"
-    direction="rtl"
-    size="60%"
-    title="添加员工"
-  >
+  <el-drawer v-model="drawerVisiable" direction="rtl" size="60%">
     <template #header>
-      <h4>添加员工</h4>
+      <h4>{{ title }}</h4>
     </template>
     <template #default>
-      <el-form
-        ref="form"
-        :model="formModel"
-        :rules="rules"
-        size="large"
-        autocomplete="off"
-      >
+      <el-form ref="form" :model="formModel" :rules="rules" size="large">
         <el-row>
-          <el-col class="left" :span="8" :offset="2">
-            <el-form-item>
-              <el-text>用户名</el-text>
+          <el-col class="left" :span="10" :offset="1">
+            <el-form-item prop="name" label="员工姓名">
               <el-input
-                :prefix-icon="User"
                 v-model="formModel.name"
                 placeholder="请输入员工姓名"
               ></el-input>
             </el-form-item>
-            <el-form-item>
-              <el-text>登录密码</el-text>
+            <el-form-item prop="password" label="登录密码">
               <el-input
                 name="password"
                 v-model="formModel.password"
-                :prefix-icon="Lock"
                 type="password"
                 placeholder="请输入登录密码"
               ></el-input>
             </el-form-item>
-            <el-form-item>
-              <el-text>身份证号</el-text>
+            <el-form-item prop="repassword" label="确认密码">
               <el-input
-                :prefix-icon="User"
+                name="password"
+                v-model="formModel.repassword"
+                type="password"
+                placeholder="请再次输入登录密码"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="身份证号" prop="idNumber">
+              <el-input
                 v-model="formModel.idNumber"
                 placeholder="请输入身份证号"
               ></el-input>
             </el-form-item>
-            <el-form-item>
-              <el-text>账号状态</el-text>
+            <el-form-item label="账号状态">
               <el-select v-model="formModel.status" size="large">
                 <el-option label="启用" value="1" />
                 <el-option label="禁用" value="0" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col class="right" :span="8" :offset="2">
-            <el-form-item>
-              <el-text>员工昵称</el-text>
+          <el-col class="right" :span="10" :offset="1">
+            <el-form-item label="账号名称" prop="username">
               <el-input
-                :prefix-icon="User"
                 v-model="formModel.username"
-                placeholder="请输入员工昵称"
+                placeholder="请输入员工账号名称"
               ></el-input>
             </el-form-item>
-            <el-form-item required>
-              <el-text style="width: 100%">性别</el-text>
+            <el-form-item required label="性别">
               <el-select v-model="formModel.sex" size="large">
-                <el-option label="男" value="1" />
-                <el-option label="女" value="0" />
+                <el-option label="男" value="男" />
+                <el-option label="女" value="女" />
               </el-select>
             </el-form-item>
-            <el-form-item>
-              <el-text>电话号码</el-text>
+            <el-form-item label="电话号码" prop="phone">
               <el-input
-                :prefix-icon="User"
                 v-model="formModel.phone"
                 placeholder="请输入电话号码"
               ></el-input>
             </el-form-item>
-            <el-form-item>
-              <el-text>员工编号</el-text>
+            <el-form-item v-if="isCreated" label="员工编号" prop="id">
               <el-input
-                :prefix-icon="User"
                 v-model="formModel.id"
                 placeholder="请输入员工编号"
               ></el-input>

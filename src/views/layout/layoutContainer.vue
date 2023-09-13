@@ -4,7 +4,8 @@ import {
   Food,
   Dish,
   CaretBottom,
-  Memo
+  Memo,
+  ForkSpoon
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores'
@@ -51,11 +52,15 @@ const avatar =
           </el-menu-item>
           <el-menu-item index="/manage/foodClass">
             <el-icon><Food /></el-icon>
-            <span>菜品管理</span>
+            <span>分类管理</span>
           </el-menu-item>
           <el-menu-item index="/manage/foodSet">
             <el-icon><Dish /></el-icon>
             <span>套餐管理</span>
+          </el-menu-item>
+          <el-menu-item index="/manage/food">
+            <el-icon><ForkSpoon /></el-icon>
+            <span>菜品管理</span>
           </el-menu-item>
           <el-menu-item index="/manage/orderForm">
             <el-icon><Memo /></el-icon>
